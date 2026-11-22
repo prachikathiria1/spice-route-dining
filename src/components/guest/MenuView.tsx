@@ -15,6 +15,7 @@ export function MenuView({ menu, tableLabel, restaurantName, hero, onOpen }: { m
   const [vegOnly, setVegOnly] = useState(false);
 
   const sorted = useMemo(() => [...menu].sort((a, b) => a.sortOrder - b.sortOrder), [menu]);
+  const allVeg = menu.length > 0 && menu.every((m) => m.veg);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return sorted
@@ -67,13 +68,19 @@ export function MenuView({ menu, tableLabel, restaurantName, hero, onOpen }: { m
           )}
         </div>
         <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4" role="tablist" aria-label="Menu categories">
-          <button
-            onClick={() => setVegOnly((v) => !v)}
-            aria-pressed={vegOnly}
-            className={cn("flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition", vegOnly ? "bg-emerald-600 text-white" : "bg-white text-slate-700 ring-1 ring-slate-200")}
-          >
-            <VegMark veg className={vegOnly ? "border-white [&>span]:bg-white" : ""} /> Veg
-          </button>
+          {allVeg ? (
+            <span className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 text-sm font-bold text-white">
+              <VegMark veg className="border-white [&>span]:bg-white" /> 100% Veg
+            </span>
+          ) : (
+            <button
+              onClick={() => setVegOnly((v) => !v)}
+              aria-pressed={vegOnly}
+              className={cn("flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition", vegOnly ? "bg-emerald-600 text-white" : "bg-white text-slate-700 ring-1 ring-slate-200")}
+            >
+              <VegMark veg className={vegOnly ? "border-white [&>span]:bg-white" : ""} /> Veg
+            </button>
+          )}
           {(["All", ...usedCategories] as const).map((c) => (
             <button
               key={c}
