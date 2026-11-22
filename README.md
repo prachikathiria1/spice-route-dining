@@ -17,23 +17,35 @@ With no env vars set, the app runs in **local demo mode**:
 - Changes sync live between tabs of the same browser through `BroadcastChannel`.
 - Sample data is pre-seeded: tables T1–T6, a 26-dish menu, live orders, a waiter call and today's sales.
 
-You can reset the data from the home page.
+Admins can reset the data in **Settings**.
 
-## Screens
+## Roles
 
-| Route | Who | What |
+There are three roles. The current role is always shown as a badge in the top-right corner of the screen: **Customer view**, **Waiter view** or **Admin view**.
+
+| Role | How to get in | Screens |
 |---|---|---|
-| `/` | everyone | Table picker and links to the staff screens |
-| `/t/5` | guest | Menu, search, dish sheet (allergens, spice, Half/Full, combos), cart, order tracker with countdown, Wi-Fi card, rewards, Spice Quiz, call waiter, bill/split/tip/pay |
-| `/staff` | waiter | New orders → **Send to kitchen** (one tap), ready → served, waiter calls |
-| `/kitchen` | kitchen | Live tickets, prep timers, station tabs (Tandoor / Curry / Cold / Drinks), per-item tick-off, new-ticket chime |
-| `/floor` | manager | T1–T6 status (Free / Ordering / Eating / Bill / **HELP** with timer), active tables, open orders, live sales |
-| `/qr` | manager | Printable QR codes for every table, with an editable base URL |
-| `/admin/menu` | manager | Add, edit and delete dishes, sold-out toggle, restaurant name, Wi-Fi details, GST |
-| `/admin/sales` | manager | Revenue, open tickets, average bill, tips, ratings, revenue by hour, top dishes, payment methods |
-| `/receipt/[id]` | guest | Shareable digital receipt |
+| **Customer** | Scan the table QR code (`/t/5`), no login | Photo menu with search and Chef's picks, dish details (allergens, spice level, Half/Full, combos), cart, live order timer, Wi-Fi and rewards, Spice Quiz, call waiter, split bill, tip, pay, receipt and rating |
+| **Waiter** | `/login` → Waiter + PIN | `/staff` order queue (one-tap send to kitchen), `/kitchen` KDS (station tabs, prep timers), `/floor` live table map with HELP alerts |
+| **Admin** | `/login` → Admin + PIN | Everything a waiter has, plus `/admin` dashboard (revenue, bills, average bill, rating, best sellers), `/admin/menu`, `/admin/tables` (QR codes) and `/admin/settings` |
 
-Staff screens have **no login**, by design for this demo.
+Staff sessions use an HMAC-signed, httpOnly cookie that lasts 12 hours. The session is checked in `src/proxy.ts` and again in the server layouts. Set these server-side variables:
+
+```
+ADMIN_PIN=...        # e.g. 6 digits
+WAITER_PIN=...
+AUTH_SECRET=...      # long random string
+```
+
+In `npm run dev` without these variables, the default PINs are Admin `1234` and Waiter `0000`. A production build refuses staff logins until the variables are set.
+
+> Note: PINs protect the staff **screens**. With the demo Supabase RLS policies, the database itself is still writable with the public anon key. For production, move writes behind Supabase Auth and RLS or server routes.
+
+## Dish photos
+
+Photos live in `public/dishes/`. They are Unsplash License images, and credits are in `public/dishes/CREDITS.md`.
+- A dish without a photo gets a clean text-only card, with no emoji placeholder.
+- Admins can set a photo URL for any dish in the menu editor.
 
 ## Supabase (free tier) for cross-device realtime
 

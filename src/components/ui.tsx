@@ -95,6 +95,7 @@ export function Sheet({
   children,
   footer,
   wide,
+  bare,
 }: {
   open: boolean;
   onClose: () => void;
@@ -102,6 +103,8 @@ export function Sheet({
   children: ReactNode;
   footer?: ReactNode;
   wide?: boolean;
+  /** No title bar; a floating close button sits over the content (for photo headers). */
+  bare?: boolean;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -124,12 +127,18 @@ export function Sheet({
           wide ? "sm:max-w-3xl" : "sm:max-w-lg",
         )}
       >
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3.5">
-          <div className="min-w-0 text-lg font-bold">{title}</div>
-          <button onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100" aria-label="Close">
+        {bare ? (
+          <button onClick={onClose} className="absolute right-3 top-3 z-10 rounded-full bg-white/90 p-2 text-zinc-900 shadow-md backdrop-blur hover:bg-white" aria-label="Close">
             <X className="size-5" />
           </button>
-        </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3.5">
+            <div className="min-w-0 text-lg font-bold">{title}</div>
+            <button onClick={onClose} className="rounded-full p-2 text-slate-500 hover:bg-slate-100" aria-label="Close">
+              <X className="size-5" />
+            </button>
+          </div>
+        )}
         <div className="flex-1 overflow-y-auto">{children}</div>
         {footer && <div className="border-t border-slate-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">{footer}</div>}
       </div>

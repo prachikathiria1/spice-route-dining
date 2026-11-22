@@ -2,11 +2,11 @@
 
 import { Pencil, Plus, Save, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { DishImage, hasDishImage } from "@/components/guest/DishImage";
 import { StaffShell } from "@/components/staff/StaffShell";
 import { useToast } from "@/components/toast";
 import { Badge, Button, Card, Sheet, SpiceMeter, VegMark } from "@/components/ui";
 import { useStore } from "@/lib/data/store";
-import { getSettings } from "@/lib/selectors";
 import { ALLERGENS, CATEGORIES, STATIONS, type AddOn, type Allergen, type MenuItem, type SizeOption } from "@/lib/types";
 import { cn, formatINR, uid } from "@/lib/utils";
 
@@ -14,7 +14,7 @@ export default function MenuAdminPage() {
   const [editing, setEditing] = useState<MenuItem | null>(null);
   return (
     <StaffShell
-      title="Menu editor"
+      title="Menu" subtitle="Toggle availability, edit prices and photos"
       actions={
         <Button onClick={() => setEditing(blankItem())}>
           <Plus className="size-4" /> Add dish
@@ -24,7 +24,6 @@ export default function MenuAdminPage() {
       {() => (
         <>
           <MenuTable onEdit={setEditing} />
-          <SettingsCard />
           {editing && <ItemEditor item={editing} onClose={() => setEditing(null)} />}
         </>
       )}
@@ -33,7 +32,7 @@ export default function MenuAdminPage() {
 }
 
 function blankItem(): MenuItem {
-  return { id: "", name: "", description: "", category: "Mains", station: "Curry", price: 0, allergens: [], spiceLevel: 1, veg: true, prepMinutes: 10, available: true, emoji: "🍽️", sortOrder: Date.now(), sizes: [], addOns: [] };
+  return { id: "", name: "", description: "", category: "Mains", station: "Curry", price: 0, allergens: [], spiceLevel: 1, veg: true, prepMinutes: 10, available: true, sortOrder: Date.now(), sizes: [], addOns: [] };
 }
 
 function MenuTable({ onEdit }: { onEdit: (m: MenuItem) => void }) {
@@ -74,7 +73,7 @@ function MenuTable({ onEdit }: { onEdit: (m: MenuItem) => void }) {
               <tr key={m.id} className={cn(!m.available && "bg-slate-50 text-slate-500")}>
                 <td className="px-4 py-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">{m.emoji}</span>
+                    {hasDishImage(m) ? <DishImage item={m} className="size-10 shrink-0 rounded-xl" /> : <span className="size-10 shrink-0 rounded-xl bg-slate-100" aria-hidden />}
                     <VegMark veg={m.veg} />
                     <span className="font-semibold">{m.name}</span>
                     {m.spiceLevel > 0 && <SpiceMeter level={m.spiceLevel} />}
@@ -172,8 +171,11 @@ function ItemEditor({ item, onClose }: { item: MenuItem; onClose: () => void }) 
         <Field label="Name">
           <input className={input} value={m.name} onChange={(e) => set("name", e.target.value)} />
         </Field>
-        <Field label="Emoji">
-          <input className={input} value={m.emoji ?? ""} onChange={(e) => set("emoji", e.target.value)} maxLength={4} />
+        <Field label="Photo URL (optional)">
+          <div className="flex items-center gap-2">
+            <input className={input} value={m.image ?? ""} onChange={(e) => set("image", e.target.value || undefined)} placeholder="https://… or leave blank" />
+            {hasDishImage(m) && <DishImage item={{ ...m, available: true }} className="size-10 shrink-0 rounded-lg" />}
+          </div>
         </Field>
         <Field label="Description" full>
           <textarea className={cn(input, "h-20 py-2")} value={m.description} onChange={(e) => set("description", e.target.value)} />
@@ -292,40 +294,5 @@ function Rows<T extends { id: string }>({ rows, onChange, make, render }: { rows
         <Plus className="size-4" /> Add
       </Button>
     </div>
-  );
-}
-
-function SettingsCard() {
-  const { state, actions } = useStore();
-  const toast = useToast();
-  const s = getSettings(state!);
-  const [form, setForm] = useState({ restaurantName: s.restaurantName, wifiSsid: s.wifiSsid, wifiPassword: s.wifiPassword, taxPct: String(Math.round(s.taxRate * 1000) / 10) });
-  return (
-    <Card className="mt-6 p-5">
-      <h2 className="mb-3 font-black">Restaurant &amp; guest Wi-Fi</h2>
-      <div className="grid gap-3 sm:grid-cols-4">
-        <Field label="Restaurant name">
-          <input className={input} value={form.restaurantName} onChange={(e) => setForm({ ...form, restaurantName: e.target.value })} />
-        </Field>
-        <Field label="Wi-Fi network">
-          <input className={input} value={form.wifiSsid} onChange={(e) => setForm({ ...form, wifiSsid: e.target.value })} />
-        </Field>
-        <Field label="Wi-Fi password">
-          <input className={input} value={form.wifiPassword} onChange={(e) => setForm({ ...form, wifiPassword: e.target.value })} />
-        </Field>
-        <Field label="GST %">
-          <input className={input} type="number" step="0.5" min={0} value={form.taxPct} onChange={(e) => setForm({ ...form, taxPct: e.target.value })} />
-        </Field>
-      </div>
-      <Button
-        className="mt-4"
-        onClick={() => {
-          actions.updateSettings({ restaurantName: form.restaurantName.trim() || s.restaurantName, wifiSsid: form.wifiSsid, wifiPassword: form.wifiPassword, taxRate: Math.max(0, Number(form.taxPct) || 0) / 100 });
-          toast("Settings saved");
-        }}
-      >
-        <Save className="size-4" /> Save settings
-      </Button>
-    </Card>
   );
 }

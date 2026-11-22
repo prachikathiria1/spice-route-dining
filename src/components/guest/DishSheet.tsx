@@ -1,10 +1,11 @@
 "use client";
 
-import { AlertTriangle, BadgePercent, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge, Button, Sheet, SpiceMeter, Stepper, VegMark } from "@/components/ui";
+import { Button, Sheet, SpiceMeter, Stepper, VegMark } from "@/components/ui";
 import type { MenuItem, OrderLine } from "@/lib/types";
 import { cn, formatINR, uid } from "@/lib/utils";
+import { DishImage, hasDishImage } from "./DishImage";
 
 export function DishSheet({ item, onClose, onAdd }: { item: MenuItem | null; onClose: () => void; onAdd: (line: OrderLine) => void }) {
   const [sizeId, setSizeId] = useState<string | undefined>();
@@ -14,7 +15,6 @@ export function DishSheet({ item, onClose, onAdd }: { item: MenuItem | null; onC
 
   useEffect(() => {
     if (!item) return;
-    // Default to the largest/"Full" size so the headline price matches.
     setSizeId(item.sizes?.[item.sizes.length - 1]?.id);
     setAddOnIds([]);
     setQty(1);
@@ -25,24 +25,20 @@ export function DishSheet({ item, onClose, onAdd }: { item: MenuItem | null; onC
   const size = item.sizes?.find((s) => s.id === sizeId);
   const addOns = (item.addOns ?? []).filter((a) => addOnIds.includes(a.id));
   const unitPrice = (size?.price ?? item.price) + addOns.reduce((a, x) => a + x.price, 0);
-
   const toggleAddOn = (id: string) => setAddOnIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+  const photo = hasDishImage(item);
 
   return (
     <Sheet
-      open={!!item}
+      open
+      bare
       onClose={onClose}
-      title={
-        <span className="flex items-center gap-2">
-          <VegMark veg={item.veg} /> {item.name}
-        </span>
-      }
       footer={
         <div className="flex items-center gap-3">
           <Stepper value={qty} onChange={setQty} min={1} max={20} />
           <Button
             size="lg"
-            className="flex-1"
+            className="flex-1 rounded-2xl bg-zinc-900 hover:bg-black"
             disabled={!item.available}
             onClick={() => {
               onAdd({
@@ -59,58 +55,42 @@ export function DishSheet({ item, onClose, onAdd }: { item: MenuItem | null; onC
               onClose();
             }}
           >
-            {item.available ? `Add ${qty} · ${formatINR(unitPrice * qty)}` : "Sold out"}
+            {item.available ? `Add to order · ${formatINR(unitPrice * qty)}` : "Sold out"}
           </Button>
         </div>
       }
     >
-      <div className="space-y-5 p-5">
-        <div className="flex items-start gap-4">
-          <div className="flex size-20 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-5xl">{item.emoji ?? "🍽️"}</div>
-          <div className="space-y-2">
-            <p className="text-sm leading-relaxed text-slate-700">{item.description}</p>
-            <div className="flex flex-wrap items-center gap-2">
-              <SpiceMeter level={item.spiceLevel} showLabel />
-              <Badge>
-                <Clock className="size-3" /> ~{item.prepMinutes} min
-              </Badge>
-              {item.popular && <Badge tone="brand">Popular</Badge>}
-            </div>
-          </div>
+      {photo && (
+        <div className="aspect-[16/10] w-full bg-slate-100">
+          <DishImage item={item} eager className="size-full" />
         </div>
-
-        <section>
-          <h3 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-900">
-            <AlertTriangle className="size-4 text-amber-600" /> Allergens
-          </h3>
-          {item.allergens.length ? (
-            <div className="flex flex-wrap gap-1.5">
-              {item.allergens.map((a) => (
-                <Badge key={a} tone="amber">
-                  {a}
-                </Badge>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-500">No major allergens listed. Ask staff if you have a severe allergy.</p>
+      )}
+      <div className={cn("space-y-6 p-5", !photo && "pt-12")}>
+        <div>
+          <div className="flex items-center gap-2">
+            <VegMark veg={item.veg} />
+            {item.spiceLevel > 0 && <SpiceMeter level={item.spiceLevel} showLabel />}
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500">
+              <Clock className="size-3.5" /> {item.prepMinutes} min
+            </span>
+          </div>
+          <h2 className="mt-2 text-2xl font-extrabold tracking-tight">{item.name}</h2>
+          <p className="mt-1.5 leading-relaxed text-slate-600">{item.description}</p>
+          {item.allergens.length > 0 && (
+            <p className="mt-3 text-sm text-slate-500">
+              <span className="font-semibold text-slate-700">Contains:</span> {item.allergens.join(", ")}
+            </p>
           )}
-        </section>
+        </div>
 
         {item.sizes && item.sizes.length > 0 && (
           <section>
             <h3 className="mb-2 text-sm font-bold">Portion</h3>
             <div className="grid grid-cols-2 gap-2">
               {item.sizes.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => setSizeId(s.id)}
-                  className={cn(
-                    "rounded-xl border-2 px-3 py-2.5 text-left transition-colors",
-                    s.id === sizeId ? "border-brand-600 bg-brand-50" : "border-slate-200 hover:border-slate-300",
-                  )}
-                >
+                <button key={s.id} onClick={() => setSizeId(s.id)} className={cn("rounded-2xl border-2 px-4 py-3 text-left transition", s.id === sizeId ? "border-zinc-900 bg-zinc-50" : "border-slate-200")}>
                   <div className="text-sm font-semibold">{s.label}</div>
-                  <div className="text-sm text-slate-600">{formatINR(s.price)}</div>
+                  <div className="text-sm text-slate-500">{formatINR(s.price)}</div>
                 </button>
               ))}
             </div>
@@ -119,27 +99,18 @@ export function DishSheet({ item, onClose, onAdd }: { item: MenuItem | null; onC
 
         {item.addOns && item.addOns.length > 0 && (
           <section>
-            <h3 className="mb-2 text-sm font-bold">Add-ons &amp; combo deals</h3>
+            <h3 className="mb-2 text-sm font-bold">Make it better</h3>
             <div className="space-y-2">
               {item.addOns.map((a) => {
                 const on = addOnIds.includes(a.id);
                 return (
-                  <label
-                    key={a.id}
-                    className={cn("flex cursor-pointer items-center gap-3 rounded-xl border-2 px-3 py-2.5", on ? "border-brand-600 bg-brand-50" : "border-slate-200")}
-                  >
-                    <input type="checkbox" checked={on} onChange={() => toggleAddOn(a.id)} className="size-4 accent-brand-600" />
+                  <label key={a.id} className={cn("flex cursor-pointer items-center gap-3 rounded-2xl border-2 px-4 py-3 transition", on ? "border-zinc-900 bg-zinc-50" : "border-slate-200")}>
+                    <input type="checkbox" checked={on} onChange={() => toggleAddOn(a.id)} className="size-4 accent-zinc-900" />
                     <span className="flex-1 text-sm font-medium">
                       {a.name}
-                      {a.isCombo && a.originalPrice && (
-                        <span className="ml-2 inline-flex items-center gap-0.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[11px] font-bold text-emerald-800">
-                          <BadgePercent className="size-3" /> Save {formatINR(a.originalPrice - a.price)}
-                        </span>
-                      )}
+                      {a.isCombo && a.originalPrice ? <span className="ml-2 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-bold text-emerald-700">Save {formatINR(a.originalPrice - a.price)}</span> : null}
                     </span>
-                    <span className="text-sm font-semibold">
-                      {a.originalPrice && <s className="mr-1 font-normal text-slate-400">{formatINR(a.originalPrice)}</s>}+{formatINR(a.price)}
-                    </span>
+                    <span className="text-sm font-semibold">+{formatINR(a.price)}</span>
                   </label>
                 );
               })}
@@ -147,19 +118,14 @@ export function DishSheet({ item, onClose, onAdd }: { item: MenuItem | null; onC
           </section>
         )}
 
-        <section>
-          <label htmlFor="dish-notes" className="mb-2 block text-sm font-bold">
-            Special instructions <span className="font-normal text-slate-500">(optional)</span>
-          </label>
-          <input
-            id="dish-notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            maxLength={120}
-            placeholder="e.g. less oil, no onion"
-            className="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-          />
-        </section>
+        <input
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          maxLength={120}
+          placeholder="Any requests? e.g. less oil, no onion"
+          aria-label="Special instructions"
+          className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none focus:border-zinc-900 focus:bg-white"
+        />
       </div>
     </Sheet>
   );

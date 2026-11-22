@@ -1,10 +1,10 @@
 import type { OrderStatus, TableStatus } from "@/lib/types";
 
 export const TABLE_STATUS_STYLE: Record<TableStatus | "Help", { label: string; card: string; chip: string; dot: string }> = {
-  Free: { label: "Free", card: "border-slate-200 bg-white", chip: "bg-slate-100 text-slate-700", dot: "bg-slate-400" },
-  Ordering: { label: "Ordering", card: "border-sky-300 bg-sky-50", chip: "bg-sky-600 text-white", dot: "bg-sky-500" },
-  Eating: { label: "Eating", card: "border-emerald-300 bg-emerald-50", chip: "bg-emerald-600 text-white", dot: "bg-emerald-500" },
-  Bill: { label: "Bill", card: "border-violet-300 bg-violet-50", chip: "bg-violet-600 text-white", dot: "bg-violet-500" },
+  Free: { label: "Free", card: "border-slate-200/80 bg-white", chip: "bg-slate-100 text-slate-700", dot: "bg-slate-400" },
+  Ordering: { label: "Ordering", card: "border-sky-200 bg-white", chip: "bg-sky-600 text-white", dot: "bg-sky-500" },
+  Eating: { label: "Eating", card: "border-emerald-200 bg-white", chip: "bg-emerald-600 text-white", dot: "bg-emerald-500" },
+  Bill: { label: "Bill", card: "border-violet-300 bg-violet-50/60", chip: "bg-violet-600 text-white", dot: "bg-violet-500" },
   Help: { label: "HELP", card: "border-red-500 bg-red-50", chip: "bg-red-600 text-white", dot: "bg-red-600" },
 };
 

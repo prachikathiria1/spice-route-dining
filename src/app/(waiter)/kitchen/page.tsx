@@ -37,7 +37,7 @@ export default function KitchenPage() {
   const [sound, setSound] = useState(true);
   return (
     <StaffShell
-      title="Kitchen display"
+      title="Kitchen" subtitle="Tap an item to tick it off"
       actions={
         <Button variant="secondary" size="sm" onClick={() => setSound((s) => !s)} aria-pressed={sound}>
           {sound ? <Bell className="size-4" /> : <BellOff className="size-4" />} {sound ? "Sound on" : "Muted"}
@@ -75,7 +75,7 @@ function Kds({ filter, setFilter, sound }: { filter: Filter; setFilter: (f: Filt
             role="tab"
             aria-selected={filter === st}
             onClick={() => setFilter(st)}
-            className={cn("flex h-12 shrink-0 items-center gap-2 rounded-xl px-5 text-base font-black", filter === st ? "bg-slate-900 text-white" : "bg-white text-slate-700 ring-1 ring-slate-300")}
+            className={cn("flex h-11 shrink-0 items-center gap-2 rounded-full px-5 text-sm font-bold", filter === st ? "bg-zinc-900 text-white" : "bg-white text-slate-700 ring-1 ring-slate-200")}
           >
             {st}
             <span className={cn("rounded-full px-2 text-sm", filter === st ? "bg-brand-500 text-white" : "bg-slate-100")}>{count(st)}</span>
@@ -124,8 +124,8 @@ function Ticket({ order: o, filter }: { order: Order; filter: Filter }) {
   const st = ORDER_STATUS_STYLE[o.status];
 
   return (
-    <article className={cn("flex flex-col overflow-hidden rounded-2xl border-2 bg-white shadow-sm", o.status === "ready" ? "border-emerald-500 opacity-80" : late ? "border-red-500" : warn ? "border-amber-400" : "border-slate-200")}>
-      <header className={cn("flex items-center justify-between px-4 py-2.5", late ? "bg-red-600 text-white" : o.status === "ready" ? "bg-emerald-600 text-white" : "bg-slate-900 text-white")}>
+    <article className={cn("flex flex-col overflow-hidden rounded-3xl border-2 bg-white shadow-sm", o.status === "ready" ? "border-emerald-500 opacity-80" : late ? "border-red-500" : warn ? "border-amber-400" : "border-slate-200")}>
+      <header className={cn("flex items-center justify-between px-4 py-2.5", late ? "bg-red-600 text-white" : o.status === "ready" ? "bg-emerald-600 text-white" : "bg-zinc-900 text-white")}>
         <div>
           <div className="text-2xl font-black leading-none">T{o.tableId.slice(1)}</div>
           <div className="text-xs opacity-80">

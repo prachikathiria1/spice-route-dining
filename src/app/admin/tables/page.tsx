@@ -14,7 +14,7 @@ const KEY = "spice-route:qr-base";
 export default function QrPage() {
   return (
     <StaffShell
-      title="Table QR codes"
+      title="Tables and QR codes" subtitle="Print and place one QR code on each table"
       actions={
         <Button variant="dark" onClick={() => window.print()} className="no-print">
           <Printer className="size-4" /> Print all

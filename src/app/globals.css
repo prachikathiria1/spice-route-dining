@@ -11,7 +11,7 @@
   --color-brand-700: #c2410c;
   --color-brand-800: #9a3412;
   --color-brand-900: #7c2d12;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --animate-pulse-ring: pulse-ring 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-slide-up: slide-up 0.22s ease-out;
   --animate-fade-in: fade-in 0.18s ease-out;
@@ -31,7 +31,7 @@
 }
 
 html { -webkit-tap-highlight-color: transparent; }
-body { background: #f8fafc; color: #0f172a; }
+body { background: #f6f5f3; color: #18181b; }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }

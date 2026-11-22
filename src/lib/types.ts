@@ -37,9 +37,13 @@ export interface MenuItem {
   prepMinutes: number;
   available: boolean;
   popular?: boolean;
-  emoji?: string;
+  /** Photo URL. Seed dishes fall back to the bundled photo in /public/dishes. */
+  image?: string;
   sortOrder: number;
 }
+
+export type StaffRole = "admin" | "waiter";
+export type ViewRole = StaffRole | "customer";
 
 export interface RestaurantTable {
   id: string; // "T1"

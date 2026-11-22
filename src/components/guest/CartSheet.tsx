@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button, Sheet, Stepper } from "@/components/ui";
 import type { Cart } from "@/hooks/useCart";
 import { formatINR } from "@/lib/utils";
+import { DishImage } from "./DishImage";
 
 export function CartSheet({ open, onClose, cart, onPlace, taxRate }: { open: boolean; onClose: () => void; cart: Cart; onPlace: (guestName: string) => void; taxRate: number }) {
   const [name, setName] = useState(() => {
@@ -24,14 +25,14 @@ export function CartSheet({ open, onClose, cart, onPlace, taxRate }: { open: boo
       onClose={onClose}
       title={
         <span className="flex items-center gap-2">
-          <ShoppingBag className="size-5 text-brand-600" /> Your order
+          <ShoppingBag className="size-5" /> Your order
         </span>
       }
       footer={
         cart.count > 0 ? (
           <Button
             size="lg"
-            className="w-full"
+            className="w-full rounded-2xl bg-emerald-700 hover:bg-emerald-800"
             loading={placing}
             onClick={() => {
               setPlacing(true);
@@ -55,6 +56,7 @@ export function CartSheet({ open, onClose, cart, onPlace, taxRate }: { open: boo
         <div className="divide-y divide-slate-100">
           {cart.lines.map((l) => (
             <div key={l.lineId} className="flex items-start gap-3 px-5 py-3">
+              <DishImage item={{ id: l.menuItemId, name: l.name, available: true }} className="size-14 shrink-0 rounded-xl" />
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">{l.name}</div>
                 <div className="text-xs text-slate-500">

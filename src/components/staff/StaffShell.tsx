@@ -1,82 +1,87 @@
 "use client";
 
-import { BarChart3, ChefHat, ClipboardList, Database, LayoutGrid, QrCode, UtensilsCrossed, WifiOff } from "lucide-react";
+import { ChefHat, ClipboardList, LayoutDashboard, LayoutGrid, QrCode, Settings, UtensilsCrossed } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { RoleBadge, SignOutButton, useStaffRole } from "@/components/role";
 import { FullScreenLoader } from "@/components/ui";
 import { useStore } from "@/lib/data/store";
 import { openCalls } from "@/lib/selectors";
 import { cn } from "@/lib/utils";
 
-const NAV = [
+const WAITER_NAV = [
   { href: "/staff", label: "Orders", icon: ClipboardList },
   { href: "/kitchen", label: "Kitchen", icon: ChefHat },
   { href: "/floor", label: "Floor", icon: LayoutGrid },
-  { href: "/qr", label: "QR codes", icon: QrCode },
+];
+const ADMIN_NAV = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  ...WAITER_NAV,
   { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed },
-  { href: "/admin/sales", label: "Sales", icon: BarChart3 },
+  { href: "/admin/tables", label: "Tables & QR", icon: QrCode },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export function ModeBadge({ className }: { className?: string }) {
   const { mode } = useStore();
-  return mode === "supabase" ? (
-    <span className={cn("inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800", className)}>
-      <Database className="size-3" /> Supabase live
-    </span>
-  ) : (
-    <span
-      className={cn("inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900", className)}
-      title="Local demo mode: data syncs across tabs in this browser only. Add Supabase env vars for cross-device sync."
-    >
-      <WifiOff className="size-3" /> Local demo
+  return (
+    <span className={cn("hidden items-center gap-1.5 text-xs font-medium text-slate-500 lg:inline-flex", className)} title={mode === "supabase" ? "Live sync across all devices" : "Local demo: syncs between tabs in this browser only"}>
+      <span className={cn("size-2 rounded-full", mode === "supabase" ? "bg-emerald-500" : "bg-amber-500")} />
+      {mode === "supabase" ? "Live" : "Local demo"}
     </span>
   );
 }
 
-export function StaffShell({ title, actions, children }: { title: string; actions?: ReactNode; children: (ready: true) => ReactNode }) {
+export function StaffShell({ title, subtitle, actions, children }: { title: string; subtitle?: string; actions?: ReactNode; children: (ready: true) => ReactNode }) {
   const { state, error } = useStore();
+  const role = useStaffRole() ?? "waiter";
   const pathname = usePathname();
+  const nav = role === "admin" ? ADMIN_NAV : WAITER_NAV;
   const helpCount = state ? openCalls(state).length : 0;
   const newOrders = state ? state.orders.filter((o) => o.status === "placed").length : 0;
 
   return (
-    <div className="min-h-dvh bg-slate-100">
-      <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-900 text-white">
-        <div className="mx-auto flex max-w-[1600px] items-center gap-2 px-3 py-2 sm:px-5">
-          <Link href="/" className="mr-2 flex items-center gap-2 font-black tracking-tight">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-brand-600">SR</span>
-            <span className="hidden lg:inline">{state?.settings[0]?.restaurantName ?? "Spice Route"}</span>
+    <div className="min-h-dvh">
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-[1500px] items-center gap-3 px-4 sm:px-6">
+          <Link href={role === "admin" ? "/admin" : "/staff"} className="flex shrink-0 items-center gap-2">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-zinc-900 text-[13px] font-extrabold text-white">SR</span>
+            <span className="hidden text-[15px] font-extrabold tracking-tight md:inline">{state?.settings[0]?.restaurantName ?? "Spice Route"}</span>
           </Link>
-          <nav className="no-scrollbar flex flex-1 gap-1 overflow-x-auto">
-            {NAV.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href;
+          <nav className="no-scrollbar -mb-px flex h-full flex-1 items-stretch gap-1 overflow-x-auto" aria-label="Staff navigation">
+            {nav.map(({ href, label, icon: Icon }) => {
+              const active = href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
               const count = href === "/staff" ? newOrders : href === "/floor" ? helpCount : 0;
               return (
                 <Link
                   key={href}
                   href={href}
                   className={cn(
-                    "relative flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors",
-                    active ? "bg-white text-slate-900" : "text-slate-300 hover:bg-slate-800 hover:text-white",
+                    "flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 text-sm font-semibold transition-colors",
+                    active ? "border-zinc-900 text-zinc-900" : "border-transparent text-slate-500 hover:text-zinc-900",
                   )}
+                  aria-current={active ? "page" : undefined}
                 >
                   <Icon className="size-4" />
                   <span className="hidden sm:inline">{label}</span>
-                  {count > 0 && (
-                    <span className={cn("ml-0.5 min-w-5 rounded-full px-1.5 text-center text-xs font-bold text-white", href === "/floor" ? "bg-red-600" : "bg-brand-600")}>{count}</span>
-                  )}
+                  {count > 0 && <span className={cn("min-w-5 rounded-full px-1.5 text-center text-[11px] font-bold leading-5 text-white", href === "/floor" ? "bg-red-600" : "bg-brand-600")}>{count}</span>}
                 </Link>
               );
             })}
           </nav>
-          <ModeBadge className="hidden shrink-0 md:inline-flex" />
+          <ModeBadge />
+          <RoleBadge view={role} />
+          <SignOutButton />
         </div>
       </header>
-      {error && <div className="bg-amber-100 px-4 py-2 text-center text-sm font-medium text-amber-900">{error}</div>}
-      <main className="mx-auto max-w-[1600px] px-3 py-4 sm:px-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-black tracking-tight">{title}</h1>
+      {error && <div className="bg-amber-50 px-4 py-2 text-center text-sm text-amber-900">{error}</div>}
+      <main className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight">{title}</h1>
+            {subtitle && <p className="mt-0.5 text-sm text-slate-500">{subtitle}</p>}
+          </div>
           {actions}
         </div>
         {state ? children(true) : <FullScreenLoader />}

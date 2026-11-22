@@ -1,12 +1,12 @@
 "use client";
 
-import { Check, ChefHat, Clock, Copy, Gamepad2, Wifi } from "lucide-react";
+import { Check, Copy, Gamepad2, Wifi } from "lucide-react";
 import { useState } from "react";
-import { Card } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { useNow } from "@/hooks/useNow";
-import { etaFor, orderTotal } from "@/lib/selectors";
+import { etaFor } from "@/lib/selectors";
 import type { Order, OrderStatus, Settings } from "@/lib/types";
-import { cn, copyText, formatClock, formatINR, formatTime } from "@/lib/utils";
+import { cn, copyText, formatClock } from "@/lib/utils";
 
 const STEPS: { status: OrderStatus; label: string }[] = [
   { status: "placed", label: "Received" },
@@ -17,96 +17,88 @@ const STEPS: { status: OrderStatus; label: string }[] = [
 ];
 const stepIndex = (s: OrderStatus) => STEPS.findIndex((x) => x.status === s);
 
-export function OrderTracker({ orders, onPlay }: { orders: Order[]; onPlay?: () => void }) {
+const HEADLINE: Record<OrderStatus, string> = {
+  placed: "Order received",
+  sent: "Sent to the kitchen",
+  preparing: "Your food is cooking",
+  ready: "Ready! On its way to you",
+  served: "Enjoy your meal",
+  cancelled: "Cancelled",
+};
+
+export function OrderTracker({ orders, onPlay, onMenu }: { orders: Order[]; onPlay?: () => void; onMenu?: () => void }) {
   const now = useNow(1000);
   if (!orders.length)
     return (
-      <Card className="p-6 text-center">
-        <ChefHat className="mx-auto size-10 text-slate-300" />
-        <p className="mt-2 font-semibold">No orders yet</p>
-        <p className="text-sm text-slate-500">Orders you place will show up here with a live prep timer.</p>
-      </Card>
+      <div className="rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200/70">
+        <p className="text-lg font-extrabold">Nothing ordered yet</p>
+        <p className="mt-1 text-sm text-slate-500">Your order and its live timer will show up here.</p>
+        {onMenu && (
+          <Button className="mt-5 rounded-2xl bg-zinc-900 hover:bg-black" onClick={onMenu}>
+            Browse the menu
+          </Button>
+        )}
+      </div>
     );
 
   const active = orders.filter((o) => o.status !== "served");
-  const nextEta = active.map(etaFor).filter((x): x is number => x !== null).sort((a, b) => a - b)[0];
+  // The furthest-behind active order drives the headline.
+  const lead = [...active].sort((a, b) => stepIndex(a.status) - stepIndex(b.status))[0];
+  const eta = lead ? etaFor(lead) : null;
+  const left = eta ? eta - now : null;
 
   return (
     <div className="space-y-3">
-      {active.length > 0 && (
-        <Card className="overflow-hidden">
-          <div className="bg-slate-900 px-5 py-5 text-white">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-300">
-              <Clock className="size-4" /> {active.some((o) => o.status === "ready") ? "Food is on its way to your table" : "Estimated time to your table"}
+      {lead ? (
+        <div className="overflow-hidden rounded-3xl bg-zinc-900 text-white shadow-lg">
+          <div className="p-6">
+            <div className="text-sm font-medium text-white/60">{HEADLINE[lead.status]}</div>
+            <div className="mt-1 text-6xl font-extrabold tracking-tight tabular" aria-live="polite">
+              {lead.status === "ready" ? "Ready" : left === null ? "--:--" : left > 0 ? formatClock(left) : "Any minute"}
             </div>
-            <div className="mt-1 text-5xl font-black tabular" aria-live="polite">
-              {active.some((o) => o.status === "ready") ? "Ready!" : nextEta ? (nextEta - now > 0 ? formatClock(nextEta - now) : "Any moment") : "Waiting…"}
+            <div className="mt-1 text-sm text-white/60">{lead.status === "placed" ? "A waiter is confirming your order" : lead.status === "ready" ? "Coming to your table" : "Estimated time to your table"}</div>
+            <div className="mt-5 flex gap-1.5" aria-label={`Step ${stepIndex(lead.status) + 1} of ${STEPS.length}`}>
+              {STEPS.map((s, i) => (
+                <div key={s.status} className={cn("h-1.5 flex-1 rounded-full", i <= stepIndex(lead.status) ? "bg-brand-500" : "bg-white/15")} />
+              ))}
             </div>
-            {!nextEta && !active.some((o) => o.status === "ready") && <div className="mt-1 text-sm text-slate-300">A staff member is confirming your order with the kitchen.</div>}
           </div>
           {onPlay && (
-            <button onClick={onPlay} className="flex w-full items-center gap-2 bg-brand-50 px-5 py-3 text-left text-sm font-semibold text-brand-800 hover:bg-brand-100">
-              <Gamepad2 className="size-4" /> Bored? Play the Spice Quiz while you wait →
+            <button onClick={onPlay} className="flex w-full items-center justify-between border-t border-white/10 px-6 py-4 text-left text-sm font-semibold hover:bg-white/5">
+              <span className="flex items-center gap-2">
+                <Gamepad2 className="size-4 text-brand-400" /> Play the Spice Quiz while you wait
+              </span>
+              <span aria-hidden>→</span>
             </button>
           )}
-        </Card>
+        </div>
+      ) : (
+        <div className="rounded-3xl bg-emerald-600 p-6 text-white shadow-lg">
+          <div className="text-2xl font-extrabold">Enjoy your meal</div>
+          <div className="mt-1 text-sm text-white/80">Everything has been served. Want anything else?</div>
+        </div>
       )}
 
-      {[...orders].reverse().map((o) => {
-        const idx = stepIndex(o.status);
-        const eta = etaFor(o);
-        return (
-          <Card key={o.id} className="p-4">
+      <div className="rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/70">
+        {[...orders].reverse().map((o, i) => (
+          <div key={o.id} className={cn("p-5", i > 0 && "border-t border-slate-100")}>
             <div className="flex items-center justify-between">
-              <div className="font-bold">Order #{o.number}</div>
-              <div className="text-xs text-slate-500">
-                {formatTime(o.createdAt)} · {formatINR(orderTotal(o))}
-              </div>
+              <span className="font-bold">Order #{o.number}</span>
+              <span className={cn("rounded-full px-2.5 py-1 text-xs font-bold", o.status === "served" ? "bg-slate-100 text-slate-600" : o.status === "ready" ? "bg-emerald-100 text-emerald-800" : "bg-brand-100 text-brand-800")}>
+                {STEPS[stepIndex(o.status)]?.label ?? o.status}
+              </span>
             </div>
-            <ol className="mt-3 flex items-center" aria-label="Order progress">
-              {STEPS.map((s, i) => (
-                <li key={s.status} className="flex flex-1 flex-col items-center last:flex-none">
-                  <div className="flex w-full items-center">
-                    <span
-                      className={cn(
-                        "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                        i < idx || o.status === "served" ? "bg-emerald-600 text-white" : i === idx ? "bg-brand-600 text-white ring-4 ring-brand-100" : "bg-slate-200 text-slate-500",
-                      )}
-                    >
-                      {i < idx || o.status === "served" ? <Check className="size-4" /> : i + 1}
-                    </span>
-                    {i < STEPS.length - 1 && <span className={cn("h-1 flex-1", i < idx ? "bg-emerald-600" : "bg-slate-200")} />}
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <div className="mt-1 flex text-[11px] font-semibold text-slate-500">
-              {STEPS.map((s, i) => (
-                <span key={s.status} className={cn("flex-1 last:flex-none", i === idx && "text-brand-700")}>
-                  {s.label}
-                </span>
-              ))}
-            </div>
-            {eta && o.status !== "served" && o.status !== "ready" && (
-              <div className="mt-2 text-sm text-slate-600">
-                About <b className="tabular">{Math.max(0, Math.ceil((eta - now) / 60000))} min</b> left
-              </div>
-            )}
-            <ul className="mt-3 space-y-1 border-t border-slate-100 pt-3 text-sm">
+            <ul className="mt-2 space-y-0.5 text-sm text-slate-600">
               {o.lines.map((l) => (
-                <li key={l.lineId} className="flex justify-between gap-2">
-                  <span className={cn(l.done && o.status !== "served" && "text-emerald-700")}>
-                    {l.qty}× {l.name}
-                    {l.sizeLabel && <span className="text-slate-500"> ({l.sizeLabel})</span>}
-                    {l.done && o.status !== "served" && " ✓"}
-                  </span>
-                  <span className="text-slate-500">{formatINR(l.unitPrice * l.qty)}</span>
+                <li key={l.lineId}>
+                  {l.qty} × {l.name}
+                  {l.sizeLabel && <span className="text-slate-400"> · {l.sizeLabel}</span>}
                 </li>
               ))}
             </ul>
-          </Card>
-        );
-      })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -114,14 +106,13 @@ export function OrderTracker({ orders, onPlay }: { orders: Order[]; onPlay?: () 
 export function WifiCard({ settings }: { settings: Settings }) {
   const [copied, setCopied] = useState(false);
   return (
-    <Card className="flex items-center gap-4 p-4">
-      <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-        <Wifi className="size-6" />
+    <div className="flex items-center gap-3 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70">
+      <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+        <Wifi className="size-5" />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Free guest Wi-Fi</div>
-        <div className="truncate font-bold">{settings.wifiSsid}</div>
-        <div className="truncate font-mono text-sm text-slate-700">{settings.wifiPassword}</div>
+        <div className="truncate text-xs font-medium text-slate-500">Wi-Fi · {settings.wifiSsid}</div>
+        <div className="truncate font-mono text-[15px] font-semibold">{settings.wifiPassword}</div>
       </div>
       <button
         onClick={async () => {
@@ -130,11 +121,11 @@ export function WifiCard({ settings }: { settings: Settings }) {
             setTimeout(() => setCopied(false), 1800);
           }
         }}
-        className={cn("flex h-11 shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-bold", copied ? "bg-emerald-600 text-white" : "bg-slate-900 text-white")}
+        className={cn("flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-bold transition", copied ? "bg-emerald-600 text-white" : "bg-zinc-900 text-white")}
         aria-label="Copy Wi-Fi password"
       >
         {copied ? <Check className="size-4" /> : <Copy className="size-4" />} {copied ? "Copied" : "Copy"}
       </button>
-    </Card>
+    </div>
   );
 }
