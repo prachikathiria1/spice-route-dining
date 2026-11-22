@@ -25,8 +25,10 @@ export function createSupabaseAdapter(url: string, anonKey: string): DataAdapter
     return Object.fromEntries(results) as unknown as DbState;
   }
 
-  async function insertAll(state: DbState) {
-    for (const c of COLLECTIONS) {
+  /** Seeds the given collections. `settings` is always written last: its presence marks a complete seed. */
+  async function insertAll(state: DbState, only: Collection[] = COLLECTIONS) {
+    const order = [...only.filter((c) => c !== "settings"), ...only.filter((c) => c === "settings")];
+    for (const c of order) {
       const rows = (state[c] as { id: string }[]).map((r) => ({ id: r.id, data: r }));
       if (!rows.length) continue;
       const { error } = await sb.from(c).upsert(rows);
@@ -38,10 +40,16 @@ export function createSupabaseAdapter(url: string, anonKey: string): DataAdapter
     mode: "supabase",
     async load() {
       const state = await fetchAll();
-      if (state.settings.length) return state;
+      if (state.settings.length && state.restaurant_tables.length && state.menu_items.length) return state;
+      // Fresh project, or a seed that was interrupted: fill in whatever core data is missing.
       const seed = buildSeed();
-      await insertAll(seed);
-      return seed;
+      if (!state.settings.length && !state.restaurant_tables.length) {
+        await insertAll(seed);
+        return seed;
+      }
+      const missing = (["menu_items", "restaurant_tables", "settings"] as const).filter((c) => !state[c].length);
+      await insertAll(seed, missing);
+      return { ...state, ...Object.fromEntries(missing.map((c) => [c, seed[c]])) } as DbState;
     },
     async upsert<C extends Collection>(collection: C, records: RecordOf<C>[]) {
       const rows = (records as { id: string }[]).map((r) => ({ id: r.id, data: r, updated_at: new Date().toISOString() }));
