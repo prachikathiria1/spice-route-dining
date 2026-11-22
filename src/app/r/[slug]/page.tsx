@@ -113,7 +113,7 @@ export default function RestaurantHome() {
                   aria-label={`Table ${n}, ${t.seats} seats${busy ? ", occupied" : ""}`}
                 >
                   <TableArt number={n} seats={t.seats} busy={busy} className="w-full max-w-[7.5rem]" />
-                  <span className={cn("mt-1 rounded-full px-2 py-0.5 text-[11px] font-bold", busy ? "bg-brand-50 text-brand-700" : "text-slate-600")}>{busy ? "Join your group" : `${t.seats} seats`}</span>
+                  <span className={cn("mt-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-bold", busy ? "bg-brand-50 text-brand-700" : "text-slate-600")}>{busy ? "Join group" : `${t.seats} seats`}</span>
                 </Link>
               );
             })}
