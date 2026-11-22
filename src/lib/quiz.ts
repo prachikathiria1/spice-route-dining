@@ -7,9 +7,9 @@ export interface QuizQuestion {
 
 export const QUIZ_POOL: QuizQuestion[] = [
   { q: "Which spice gives biryani its golden colour and floral aroma?", options: ["Turmeric", "Saffron", "Paprika", "Annatto"], answer: 1, fact: "It takes roughly 150 crocus flowers to make one gram of saffron." },
-  { q: "Kasuri methi, used in butter chicken, is the dried leaf of which plant?", options: ["Fenugreek", "Curry leaf", "Mint", "Coriander"], answer: 0, fact: "Kasuri methi is named after Kasur, a town in Punjab." },
+  { q: "Kasuri methi, used in paneer makhani, is the dried leaf of which plant?", options: ["Fenugreek", "Curry leaf", "Mint", "Coriander"], answer: 0, fact: "Kasuri methi is named after Kasur, a town in Punjab." },
   { q: "What does 'tandoor' refer to?", options: ["A spice blend", "A clay oven", "A cooking pot", "A bread style"], answer: 1, fact: "Tandoors can reach around 480°C, which is why naan blisters in about a minute." },
-  { q: "Which chilli is famous for colour more than heat?", options: ["Bhut Jolokia", "Kashmiri chilli", "Guntur chilli", "Bird's eye"], answer: 1, fact: "Kashmiri chilli is what gives rogan josh its deep red colour." },
+  { q: "Which chilli is famous for colour more than heat?", options: ["Bhut Jolokia", "Kashmiri chilli", "Guntur chilli", "Bird's eye"], answer: 1, fact: "Kashmiri chilli is what gives many North Indian gravies their deep red colour." },
   { q: "Garam masala literally means…", options: ["Green spice", "Hot spice mix", "Sweet blend", "Royal powder"], answer: 1, fact: "'Garam' refers to warming the body, not chilli heat." },
   { q: "Bhut Jolokia, once the world's hottest chilli, comes from which region?", options: ["Kerala", "Rajasthan", "Northeast India", "Punjab"], answer: 2, fact: "It measures over 1,000,000 Scoville heat units." },
   { q: "What is 'tadka'?", options: ["A dessert", "Tempering spices in hot oil or ghee", "A type of lentil", "A rice dish"], answer: 1, fact: "Tadka is poured over dal at the end to bloom spices like cumin and mustard seeds." },

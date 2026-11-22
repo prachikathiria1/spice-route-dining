@@ -3,14 +3,13 @@
 import { Plus, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SpiceMeter, VegMark } from "@/components/ui";
-import { HERO_IMAGE } from "@/lib/images";
 import { orderCategories, type Category, type MenuItem } from "@/lib/types";
 import { cn, formatINR } from "@/lib/utils";
 import { DishImage, hasDishImage } from "./DishImage";
 
 const fromPrice = (m: MenuItem) => (m.sizes?.length ? Math.min(...m.sizes.map((s) => s.price)) : m.price);
 
-export function MenuView({ menu, tableLabel, restaurantName, onOpen }: { menu: MenuItem[]; tableLabel: string; restaurantName: string; onOpen: (item: MenuItem) => void }) {
+export function MenuView({ menu, tableLabel, restaurantName, hero, onOpen }: { menu: MenuItem[]; tableLabel: string; restaurantName: string; hero?: string | null; onOpen: (item: MenuItem) => void }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<Category | "All">("All");
   const [vegOnly, setVegOnly] = useState(false);
@@ -33,9 +32,15 @@ export function MenuView({ menu, tableLabel, restaurantName, onOpen }: { menu: M
       {/* Hero */}
       <div className="px-4 pt-4">
         <div className="relative h-40 overflow-hidden rounded-3xl">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={HERO_IMAGE} alt="" className="absolute inset-0 size-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-transparent" />
+          {hero ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={hero} alt="" className="absolute inset-0 size-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-transparent" />
+            </>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-brand-500 via-brand-600 to-brand-900" />
+          )}
           <div className="relative flex h-full flex-col justify-end p-5 text-white">
             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">{tableLabel}</div>
             <div className="text-2xl font-extrabold leading-tight tracking-tight">Welcome to {restaurantName}</div>

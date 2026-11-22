@@ -19,4 +19,4 @@ Dish photos come from Unsplash under the Unsplash License (free for commercial u
 - masala-chai.jpg — https://unsplash.com/photos/7-PQGUrIGOc
 - nimbu-soda.jpg — https://unsplash.com/photos/cLmCH3aygHk
 - watermelon-cooler.jpg — https://unsplash.com/photos/XoN3v3Ge7EE
-- hero-platter.jpg — https://unsplash.com/photos/Xns5s92Ipcc
+- hero-veg.jpg — https://unsplash.com/photos/8T9AVksyt7s

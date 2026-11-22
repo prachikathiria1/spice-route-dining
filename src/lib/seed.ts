@@ -19,18 +19,13 @@ const m = (item: Omit<MenuItem, "sortOrder" | "available"> & { available?: boole
 export const SEED_MENU: MenuItem[] = [
   // Starters
   m({ id: "paneer-tikka", name: "Paneer Tikka", description: "Cottage cheese cubes marinated in yoghurt and spices, charred in the tandoor with peppers and onion.", category: "Starters", station: "Tandoor", price: 289, sizes: [{ id: "half", label: "Half (4 pc)", price: 189 }, { id: "full", label: "Full (8 pc)", price: 289 }], addOns: [extraCheese, softDrink, lassiCombo], allergens: ["Dairy"], spiceLevel: 2, veg: true, prepMinutes: 14, popular: true }),
-  m({ id: "chicken-tikka", name: "Chicken Tikka", description: "Boneless chicken thigh in a smoky red marinade, finished with lemon and chaat masala.", category: "Starters", station: "Tandoor", price: 329, sizes: [{ id: "half", label: "Half (4 pc)", price: 209 }, { id: "full", label: "Full (8 pc)", price: 329 }], addOns: [softDrink, lassiCombo], allergens: ["Dairy", "Mustard"], spiceLevel: 2, veg: false, prepMinutes: 16, popular: true }),
   m({ id: "hara-bhara-kebab", name: "Hara Bhara Kebab", description: "Spinach, peas and potato patties with a cashew centre, shallow fried.", category: "Starters", station: "Curry", price: 229, allergens: ["Nuts", "Gluten"], spiceLevel: 1, veg: true, prepMinutes: 10, addOns: [softDrink] }),
   m({ id: "punjabi-samosa", name: "Punjabi Samosa", description: "Two crisp pastries filled with spiced potato and peas, served with mint and tamarind chutneys.", category: "Starters", station: "Curry", price: 129, allergens: ["Gluten"], spiceLevel: 1, veg: true, prepMinutes: 6, addOns: [softDrink] }),
-  m({ id: "amritsari-fish", name: "Amritsari Fish", description: "Gram-flour battered river fish with ajwain, served with mint chutney.", category: "Starters", station: "Curry", price: 349, allergens: ["Egg"], spiceLevel: 2, veg: false, prepMinutes: 12 }),
 
   // Mains
-  m({ id: "butter-chicken", name: "Butter Chicken", description: "Tandoori chicken simmered in a velvety tomato, butter and fenugreek gravy.", category: "Mains", station: "Curry", price: 399, sizes: [{ id: "half", label: "Half", price: 259 }, { id: "full", label: "Full", price: 399 }], addOns: [extraButter, naanCombo, lassiCombo], allergens: ["Dairy", "Nuts"], spiceLevel: 1, veg: false, prepMinutes: 15, popular: true }),
   m({ id: "paneer-butter-masala", name: "Paneer Butter Masala", description: "Soft paneer in a rich, mildly sweet makhani gravy with cream.", category: "Mains", station: "Curry", price: 349, sizes: [{ id: "half", label: "Half", price: 229 }, { id: "full", label: "Full", price: 349 }], addOns: [extraButter, naanCombo], allergens: ["Dairy", "Nuts"], spiceLevel: 1, veg: true, prepMinutes: 13, popular: true }),
   m({ id: "dal-makhani", name: "Dal Makhani", description: "Black lentils slow-cooked overnight with butter and cream.", category: "Mains", station: "Curry", price: 289, sizes: [{ id: "half", label: "Half", price: 189 }, { id: "full", label: "Full", price: 289 }], addOns: [naanCombo, raita], allergens: ["Dairy"], spiceLevel: 0, veg: true, prepMinutes: 8 }),
   m({ id: "chole-masala", name: "Amritsari Chole", description: "Chickpeas in a dark, tangy spice blend with ginger juliennes.", category: "Mains", station: "Curry", price: 249, addOns: [naanCombo], allergens: [], spiceLevel: 2, veg: true, prepMinutes: 8 }),
-  m({ id: "rogan-josh", name: "Lamb Rogan Josh", description: "Kashmiri-style lamb curry with Kashmiri chilli and fennel.", category: "Mains", station: "Curry", price: 479, addOns: [naanCombo, raita], allergens: ["Dairy"], spiceLevel: 3, veg: false, prepMinutes: 18 }),
-  m({ id: "tandoori-prawns", name: "Tandoori Prawns", description: "Tiger prawns in a garlic, ajwain and Kashmiri chilli marinade, chargrilled in the tandoor.", category: "Starters", station: "Tandoor", price: 449, allergens: ["Shellfish", "Dairy"], spiceLevel: 2, veg: false, prepMinutes: 14, available: false }),
 
   // Breads
   m({ id: "butter-naan", name: "Butter Naan", description: "Leavened flatbread from the tandoor, brushed with butter.", category: "Breads", station: "Tandoor", price: 69, allergens: ["Gluten", "Dairy"], spiceLevel: 0, veg: true, prepMinutes: 5 }),
@@ -40,7 +35,6 @@ export const SEED_MENU: MenuItem[] = [
 
   // Rice
   m({ id: "veg-biryani", name: "Subz Dum Biryani", description: "Basmati and seasonal vegetables slow-cooked with saffron and fried onions.", category: "Rice", station: "Curry", price: 299, addOns: [raita], allergens: ["Dairy", "Nuts"], spiceLevel: 2, veg: true, prepMinutes: 16 }),
-  m({ id: "chicken-biryani", name: "Hyderabadi Chicken Biryani", description: "Dum-cooked layered biryani with mint, saffron and kewra.", category: "Rice", station: "Curry", price: 379, sizes: [{ id: "half", label: "Half", price: 249 }, { id: "full", label: "Full", price: 379 }], addOns: [raita, softDrink], allergens: ["Dairy", "Nuts"], spiceLevel: 2, veg: false, prepMinutes: 18, popular: true }),
   m({ id: "veg-pulao", name: "Vegetable Pulao", description: "Fragrant basmati with peas, carrots, spring onion and whole spices.", category: "Rice", station: "Curry", price: 179, allergens: ["Dairy"], spiceLevel: 0, veg: true, prepMinutes: 8 }),
 
   // Desserts
@@ -136,14 +130,14 @@ export function buildSeed(now = Date.now()): DbState {
 
   const orders: Order[] = [
     // T2: eating (served)
-    { id: uid(), number: 101, tableId: "T2", sessionId: s2, lines: [line("butter-chicken", 1, "full", true), line("garlic-naan", 3, undefined, true), line("mango-lassi", 2, "reg", true)], status: "served", estPrepMinutes: 15, createdAt: now - 42 * min, sentAt: now - 41 * min, startedAt: now - 40 * min, readyAt: now - 26 * min, servedAt: now - 24 * min, paid: false },
+    { id: uid(), number: 101, tableId: "T2", sessionId: s2, lines: [line("paneer-butter-masala", 1, "full", true), line("garlic-naan", 3, undefined, true), line("mango-lassi", 2, "reg", true)], status: "served", estPrepMinutes: 15, createdAt: now - 42 * min, sentAt: now - 41 * min, startedAt: now - 40 * min, readyAt: now - 26 * min, servedAt: now - 24 * min, paid: false },
     // T3: in the kitchen, preparing
     { id: uid(), number: 102, tableId: "T3", sessionId: s3, lines: [line("paneer-tikka", 1, "full"), line("dal-makhani", 1, "full"), line("butter-naan", 2), line("masala-chai", 2, undefined, true)], status: "preparing", estPrepMinutes: 14, createdAt: now - 9 * min, sentAt: now - 8 * min, startedAt: now - 6 * min, readyAt: null, servedAt: null, paid: false },
     // T4: just placed, waiting for staff to send to kitchen
-    { id: uid(), number: 103, tableId: "T4", sessionId: s4, lines: [line("chicken-biryani", 2, "full"), line("hara-bhara-kebab", 1), line("nimbu-soda", 2)], status: "placed", estPrepMinutes: 18, createdAt: now - 2 * min, sentAt: null, startedAt: null, readyAt: null, servedAt: null, paid: false },
+    { id: uid(), number: 103, tableId: "T4", sessionId: s4, lines: [line("veg-biryani", 2), line("hara-bhara-kebab", 1), line("nimbu-soda", 2)], status: "placed", estPrepMinutes: 18, createdAt: now - 2 * min, sentAt: null, startedAt: null, readyAt: null, servedAt: null, paid: false },
     // T6: sent, not started; plus served earlier
     { id: uid(), number: 104, tableId: "T6", sessionId: s6, lines: [line("punjabi-samosa", 2, undefined, true), line("sweet-lassi", 2, "reg", true)], status: "served", estPrepMinutes: 6, createdAt: now - 30 * min, sentAt: now - 29 * min, startedAt: now - 28 * min, readyAt: now - 23 * min, servedAt: now - 21 * min, paid: false },
-    { id: uid(), number: 105, tableId: "T6", sessionId: s6, lines: [line("rogan-josh", 1), line("lachha-paratha", 2), line("veg-pulao", 1)], status: "sent", estPrepMinutes: 18, createdAt: now - 4 * min, sentAt: now - 3 * min, startedAt: null, readyAt: null, servedAt: null, paid: false },
+    { id: uid(), number: 105, tableId: "T6", sessionId: s6, lines: [line("chole-masala", 1), line("lachha-paratha", 2), line("veg-pulao", 1)], status: "sent", estPrepMinutes: 18, createdAt: now - 4 * min, sentAt: now - 3 * min, startedAt: null, readyAt: null, servedAt: null, paid: false },
   ];
 
   const calls: WaiterCall[] = [
@@ -163,8 +157,8 @@ export function buildSeed(now = Date.now()): DbState {
     [60, "T3", 1312, "Card", 1],
   ];
   const sampleLines: Payment["lines"][] = [
-    [{ name: "Butter Chicken", qty: 1, amount: 399, sizeLabel: "Full" }, { name: "Garlic Naan", qty: 4, amount: 356 }, { name: "Mango Lassi", qty: 3, amount: 387 }],
-    [{ name: "Hyderabadi Chicken Biryani", qty: 2, amount: 758, sizeLabel: "Full" }, { name: "Paneer Tikka", qty: 2, amount: 578, sizeLabel: "Full (8 pc)" }, { name: "Masala Chai", qty: 4, amount: 236 }],
+    [{ name: "Paneer Butter Masala", qty: 1, amount: 349, sizeLabel: "Full" }, { name: "Garlic Naan", qty: 4, amount: 356 }, { name: "Mango Lassi", qty: 3, amount: 387 }],
+    [{ name: "Subz Dum Biryani", qty: 2, amount: 598 }, { name: "Paneer Tikka", qty: 2, amount: 578, sizeLabel: "Full (8 pc)" }, { name: "Masala Chai", qty: 4, amount: 236 }],
     [{ name: "Dal Makhani", qty: 1, amount: 289, sizeLabel: "Full" }, { name: "Paneer Butter Masala", qty: 1, amount: 349, sizeLabel: "Full" }, { name: "Butter Naan", qty: 3, amount: 207 }],
   ];
   const payments: Payment[] = pastSales.map(([ago, tableId, subtotal, method, ways], i) => {
@@ -221,7 +215,7 @@ export function buildSeed(now = Date.now()): DbState {
         defaultLanguage: "en",
         active: true,
         createdAt: now,
-        tagline: "North Indian kitchen & tandoor",
+        tagline: "Pure veg North Indian kitchen",
         wifiSsid: "SpiceRoute_Guest",
         wifiPassword: "naan-stop-2026",
         taxRate: 0.05,

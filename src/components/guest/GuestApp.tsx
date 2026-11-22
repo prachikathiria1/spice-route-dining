@@ -9,6 +9,8 @@ import { useToast } from "@/components/toast";
 import { Button, FullScreenLoader } from "@/components/ui";
 import { useCart } from "@/hooks/useCart";
 import { useStore } from "@/lib/data/store";
+import { HERO_IMAGE } from "@/lib/images";
+import { DEMO_SLUG } from "@/lib/seed";
 import { getSettings, getTable, openCalls, orderTotal, sessionOrders } from "@/lib/selectors";
 import type { MenuItem } from "@/lib/types";
 import { cn, formatINR, isToday } from "@/lib/utils";
@@ -105,7 +107,7 @@ export function GuestApp({ tableId }: { tableId: string }) {
       <GuestHeader name={settings.restaurantName} table={table.label} onCall={() => setCallOpen(true)} called={!!activeCall} />
       {error &&<div className="bg-amber-50 px-4 py-2 text-xs text-amber-900">{error}</div>}
 
-      {tab === "menu" && <MenuView menu={state.menu_items} tableLabel={table.label} restaurantName={settings.restaurantName} onOpen={setDish} />}
+      {tab === "menu" && <MenuView menu={state.menu_items} tableLabel={table.label} restaurantName={settings.restaurantName} hero={settings.heroImage || (settings.slug === DEMO_SLUG ? HERO_IMAGE : null)} onOpen={setDish} />}
 
       {tab === "order" && (
         <div className="space-y-4 p-4">

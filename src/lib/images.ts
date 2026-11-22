@@ -29,7 +29,7 @@ const LIBRARY: { file: string; veg: boolean; names: string[] }[] = [
 const BY_ID = new Map(LIBRARY.map((l) => [l.file, l.file]));
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
 
-export const HERO_IMAGE = "/dishes/hero-platter.jpg";
+export const HERO_IMAGE = "/dishes/hero-veg.jpg";
 
 type DishLike = Pick<MenuItem, "id" | "image"> & { name?: string; veg?: boolean };
 
