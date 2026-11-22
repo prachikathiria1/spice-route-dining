@@ -1,16 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import { RoleProvider } from "@/components/role";
+import { ServiceWorker } from "@/components/ServiceWorker";
 import { ToastProvider } from "@/components/toast";
-import { StoreProvider } from "@/lib/data/store";
-import { currentRole } from "@/lib/session";
 import "./globals.css";
 
 const sans = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Spice Route · Smart Dining",
-  description: "Order at your table, track your food, call a waiter and pay — Spice Route.",
+  title: "Smart Dining",
+  description: "QR ordering, kitchen display, floor management and pay-at-table for restaurants.",
+  appleWebApp: { capable: true, title: "Smart Dining", statusBarStyle: "default" },
+  icons: { apple: "/icons/icon-192.png" },
 };
 
 export const viewport: Viewport = {
@@ -20,16 +20,12 @@ export const viewport: Viewport = {
   themeColor: "#ffffff",
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const role = await currentRole();
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={sans.variable}>
       <body className="min-h-dvh font-sans antialiased">
-        <RoleProvider role={role}>
-          <StoreProvider>
-            <ToastProvider>{children}</ToastProvider>
-          </StoreProvider>
-        </RoleProvider>
+        <ToastProvider>{children}</ToastProvider>
+        <ServiceWorker />
       </body>
     </html>
   );

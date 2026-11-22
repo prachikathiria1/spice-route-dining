@@ -1,24 +1,25 @@
 "use client";
 
-import { ChefHat, LogOut, ShieldCheck, Smartphone } from "lucide-react";
+import { ChefHat, Crown, LogOut, ShieldCheck, Smartphone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useState, type ReactNode } from "react";
-import type { StaffRole, ViewRole } from "@/lib/types";
+import type { SessionRole, ViewRole } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const RoleContext = createContext<StaffRole | null>(null);
+const RoleContext = createContext<SessionRole | null>(null);
 
-export function RoleProvider({ role, children }: { role: StaffRole | null; children: ReactNode }) {
+export function RoleProvider({ role, children }: { role: SessionRole | null; children: ReactNode }) {
   return <RoleContext.Provider value={role}>{children}</RoleContext.Provider>;
 }
 
-/** The signed-in staff role (null for customers). */
+/** The signed-in role inside this restaurant ("super" = platform owner; null for customers). */
 export const useStaffRole = () => useContext(RoleContext);
 
 const BADGE: Record<ViewRole, { label: string; icon: typeof ShieldCheck; cls: string }> = {
   admin: { label: "Admin view", icon: ShieldCheck, cls: "bg-violet-600 text-white" },
   waiter: { label: "Waiter view", icon: ChefHat, cls: "bg-sky-600 text-white" },
   customer: { label: "Customer view", icon: Smartphone, cls: "bg-brand-600 text-white" },
+  super: { label: "Super admin", icon: Crown, cls: "bg-amber-500 text-zinc-950" },
 };
 
 /** Pill shown in the top-right corner of every screen. */
@@ -32,7 +33,7 @@ export function RoleBadge({ view, className }: { view: ViewRole; className?: str
   );
 }
 
-export function SignOutButton({ className }: { className?: string }) {
+export function SignOutButton({ className, to = "/" }: { className?: string; to?: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   return (
@@ -40,7 +41,7 @@ export function SignOutButton({ className }: { className?: string }) {
       onClick={async () => {
         setBusy(true);
         await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-        router.replace("/login");
+        router.replace(to);
         router.refresh();
       }}
       disabled={busy}

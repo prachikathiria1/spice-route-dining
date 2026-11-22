@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { buildSeed } from "../seed";
+import { buildRestaurant, buildSeed, DEMO_SLUG, makeTables } from "../seed";
 import type {
   CallTag,
   Collection,
@@ -18,11 +18,14 @@ import type {
   WaiterCall,
 } from "../types";
 import { uid } from "../utils";
-import { applyChange, type DataAdapter } from "./adapter";
+import { applyChange, RestaurantNotFound, type DataAdapter } from "./adapter";
 import { createLocalAdapter } from "./local-adapter";
 import { createSupabaseAdapter } from "./supabase-adapter";
 
 interface StoreValue {
+  restaurantId: string;
+  /** true when the restaurant in the URL doesn't exist */
+  notFound: boolean;
   state: DbState | null;
   mode: "local" | "supabase";
   error: string | null;
@@ -31,15 +34,20 @@ interface StoreValue {
 
 const StoreContext = createContext<StoreValue | null>(null);
 
-function pickAdapter(): DataAdapter {
+export const supabaseEnv = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (url && key) return createSupabaseAdapter(url, key);
-  return createLocalAdapter();
+  return url && key ? { url, key } : null;
+};
+
+function pickAdapter(rid: string): DataAdapter {
+  const env = supabaseEnv();
+  return env ? createSupabaseAdapter(env.url, env.key, rid) : createLocalAdapter(rid);
 }
 
-export function StoreProvider({ children }: { children: ReactNode }) {
+export function StoreProvider({ restaurantId, children }: { restaurantId: string; children: ReactNode }) {
   const [state, setState] = useState<DbState | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [adapter, setAdapter] = useState<DataAdapter | null>(null);
   const stateRef = useRef<DbState | null>(null);
@@ -55,15 +63,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     let unsub: (() => void) | undefined;
     (async () => {
-      let a = pickAdapter();
+      setState(null);
+      setNotFound(false);
+      let a = pickAdapter(restaurantId);
       let initial: DbState;
       try {
         initial = await a.load();
       } catch (e) {
+        if (e instanceof RestaurantNotFound) {
+          if (!cancelled) setNotFound(true);
+          return;
+        }
         console.error(e);
         setError(`${e instanceof Error ? e.message : String(e)} Falling back to local demo mode.`);
-        a = createLocalAdapter();
-        initial = await a.load();
+        a = createLocalAdapter(restaurantId);
+        try {
+          initial = await a.load();
+        } catch {
+          if (!cancelled) setNotFound(true);
+          return;
+        }
       }
       if (cancelled) return;
       unsub = a.subscribe(apply);
@@ -74,7 +93,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       unsub?.();
     };
-  }, [apply]);
+  }, [apply, restaurantId]);
 
   const write = useCallback(
     <C extends Collection>(collection: C, records: RecordOf<C>[]) => {
@@ -96,15 +115,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const reset = useCallback(async () => {
     if (!adapter) return;
-    const seed = buildSeed();
+    // The demo restaurant resets to sample data; real restaurants keep menu + settings and clear activity.
+    const cur = stateRef.current;
+    const seed =
+      restaurantId === DEMO_SLUG || !cur
+        ? buildSeed()
+        : { ...buildRestaurant({ slug: restaurantId, restaurantName: "", tableCount: cur.restaurant_tables.length }), settings: cur.settings, menu_items: cur.menu_items, restaurant_tables: makeTables(cur.restaurant_tables.length) };
     stateRef.current = seed;
     setState(seed);
     await adapter.reset(seed);
-  }, [adapter]);
+  }, [adapter, restaurantId]);
 
   const actions = useMemo(() => makeActions(() => stateRef.current, write, remove, reset), [write, remove, reset]);
 
-  const value = useMemo<StoreValue>(() => ({ state, mode: adapter?.mode ?? "local", error, actions }), [state, adapter, error, actions]);
+  const value = useMemo<StoreValue>(() => ({ restaurantId, notFound, state, mode: adapter?.mode ?? (supabaseEnv() ? "supabase" : "local"), error, actions }), [restaurantId, notFound, state, adapter, error, actions]);
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
 
@@ -276,8 +300,28 @@ function makeActions(get: () => DbState | null, write: Writer, remove: (c: Colle
       if (p) write("payments", [{ ...p, receiptEmail: email }]);
     },
 
-    addReview(review: Omit<Review, "id" | "createdAt">) {
-      write("reviews", [{ ...review, id: uid(), createdAt: Date.now() }]);
+    addReview(review: Omit<Review, "id" | "createdAt">): string {
+      const id = uid();
+      write("reviews", [{ ...review, id, createdAt: Date.now() }]);
+      return id;
+    },
+    updateReview(id: string, patch: Partial<Review>) {
+      const r = must().reviews.find((x) => x.id === id);
+      if (r) write("reviews", [{ ...r, ...patch }]);
+    },
+    /** Replace the whole menu (used by menu import). */
+    replaceMenu(items: MenuItem[]) {
+      const old = must().menu_items.map((m) => m.id);
+      const keep = new Set(items.map((i) => i.id));
+      remove("menu_items", old.filter((id) => !keep.has(id)));
+      write("menu_items", items);
+    },
+    setTableCount(count: number) {
+      const cur = must().restaurant_tables;
+      const next = makeTables(count, cur);
+      const drop = cur.filter((t) => !next.some((n) => n.id === t.id) && !t.sessionId).map((t) => t.id);
+      write("restaurant_tables", next.filter((t) => !cur.includes(t)));
+      if (drop.length) remove("restaurant_tables", drop);
     },
 
     addQuizScore(score: Omit<QuizScore, "id" | "createdAt">) {
@@ -301,3 +345,6 @@ function makeActions(get: () => DbState | null, write: Writer, remove: (c: Colle
     },
   };
 }
+
+/** URL prefix for the current restaurant, e.g. "/r/spice-route". */
+export const useBase = () => `/r/${useStore().restaurantId}`;

@@ -1,13 +1,13 @@
 "use client";
 
-import { Check, Link2, Mail, Printer, Star } from "lucide-react";
+import { Check, ExternalLink, Link2, Mail, MessageCircle, Printer, Star } from "lucide-react";
 import { useState } from "react";
 import { Button, Card } from "@/components/ui";
 import { useToast } from "@/components/toast";
 import { useStore } from "@/lib/data/store";
 import { getSettings } from "@/lib/selectors";
 import type { Payment } from "@/lib/types";
-import { cn, copyText, formatINR } from "@/lib/utils";
+import { cn, copyText, formatINR, waLink } from "@/lib/utils";
 
 const REVIEW_TAGS = ["Great food", "Fast service", "Friendly staff", "Ambience", "Value for money", "Slow service"];
 
@@ -76,12 +76,12 @@ function Line({ label, v }: { label: string; v: number }) {
 }
 
 function ReceiptActions({ payment }: { payment: Payment }) {
-  const { state, actions } = useStore();
+  const { state, actions, restaurantId } = useStore();
   const toast = useToast();
   const [email, setEmail] = useState(payment.receiptEmail ?? "");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(!!payment.receiptEmail);
-  const receiptUrl = typeof window !== "undefined" ? `${window.location.origin}/receipt/${payment.id}` : "";
+  const receiptUrl = typeof window !== "undefined" ? `${window.location.origin}/r/${restaurantId}/receipt/${payment.id}` : "";
 
   async function send() {
     if (!/^\S+@\S+\.\S+$/.test(email)) {
@@ -127,6 +127,14 @@ function ReceiptActions({ payment }: { payment: Payment }) {
           {sent ? <Check className="size-4" /> : <Mail className="size-4" />} {sent ? "Sent" : "Email"}
         </Button>
       </div>
+      <a
+        href={waLink(`*${state?.settings[0]?.restaurantName ?? "Receipt"}* receipt ${payment.receiptNo}\nTotal paid: ${formatINR(payment.total)}\n${receiptUrl}`)}
+        target="_blank"
+        rel="noreferrer"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 font-bold text-white hover:bg-emerald-700"
+      >
+        <MessageCircle className="size-5" /> Send receipt on WhatsApp
+      </a>
       <div className="flex gap-2">
         <Button variant="secondary" className="flex-1" onClick={() => window.print()}>
           <Printer className="size-4" /> Print / PDF
@@ -148,36 +156,60 @@ function ReceiptActions({ payment }: { payment: Payment }) {
 function QuickReview({ payment }: { payment: Payment }) {
   const { state, actions } = useStore();
   const existing = state?.reviews.find((r) => r.paymentId === payment.id);
+  const googleUrl = state?.settings[0]?.googleReviewUrl;
   const [tags, setTags] = useState<string[]>([]);
   const [hover, setHover] = useState(0);
+  const [comment, setComment] = useState("");
+  const [sentComment, setSentComment] = useState(false);
 
-  if (existing)
+  if (existing) {
+    const happy = existing.rating >= 4;
     return (
-      <Card className="no-print p-5 text-center">
+      <Card className="no-print space-y-3 p-5 text-center">
         <div className="flex justify-center gap-1">
           {[1, 2, 3, 4, 5].map((n) => (
             <Star key={n} className={cn("size-7", n <= existing.rating ? "fill-amber-400 text-amber-400" : "text-slate-300")} />
           ))}
         </div>
-        <div className="mt-2 font-bold">Thanks for the feedback!</div>
-        <div className="text-sm text-slate-500">See you again soon.</div>
+        {happy ? (
+          <>
+            <div className="text-lg font-extrabold">Yay, so glad you enjoyed it!</div>
+            {googleUrl ? (
+              <>
+                <p className="text-sm text-slate-500">Would you share that on Google? It takes 20 seconds and helps us a lot.</p>
+                <a href={googleUrl} target="_blank" rel="noreferrer" className="flex h-12 items-center justify-center gap-2 rounded-xl bg-zinc-900 font-bold text-white">
+                  <Star className="size-5 fill-amber-400 text-amber-400" /> Rate us on Google <ExternalLink className="size-4" />
+                </a>
+              </>
+            ) : (
+              <p className="text-sm text-slate-500">See you again soon.</p>
+            )}
+          </>
+        ) : existing.comment || sentComment ? (
+          <div className="font-bold">Thank you. The manager will look into it.</div>
+        ) : (
+          <>
+            <div className="font-bold">Sorry it wasn't perfect. What went wrong?</div>
+            <textarea value={comment} onChange={(e) => setComment(e.target.value)} maxLength={400} rows={3} placeholder="Tell the manager (only they will see this)" className="w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:border-zinc-900" />
+            <Button
+              className="w-full bg-zinc-900 hover:bg-black"
+              disabled={!comment.trim()}
+              onClick={() => {
+                actions.updateReview(existing.id, { comment: comment.trim() });
+                setSentComment(true);
+              }}
+            >
+              Send to manager
+            </Button>
+          </>
+        )}
       </Card>
     );
+  }
 
   return (
     <Card className="no-print space-y-3 p-5 text-center">
       <div className="font-black">How was your meal?</div>
-      <div className="flex flex-wrap justify-center gap-1.5">
-        {REVIEW_TAGS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTags((ts) => (ts.includes(t) ? ts.filter((x) => x !== t) : [...ts, t]))}
-            className={cn("rounded-full border px-3 py-1 text-xs font-semibold", tags.includes(t) ? "border-brand-600 bg-brand-600 text-white" : "border-slate-300 text-slate-700")}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
       <div className="flex justify-center gap-1" onMouseLeave={() => setHover(0)}>
         {[1, 2, 3, 4, 5].map((n) => (
           <button
@@ -191,7 +223,18 @@ function QuickReview({ payment }: { payment: Payment }) {
           </button>
         ))}
       </div>
-      <div className="text-xs text-slate-500">Tap a star to submit. Picking tags is optional.</div>
+      <div className="flex flex-wrap justify-center gap-1.5">
+        {REVIEW_TAGS.map((t) => (
+          <button
+            key={t}
+            onClick={() => setTags((ts) => (ts.includes(t) ? ts.filter((x) => x !== t) : [...ts, t]))}
+            className={cn("rounded-full border px-3 py-1 text-xs font-semibold", tags.includes(t) ? "border-brand-600 bg-brand-600 text-white" : "border-slate-300 text-slate-700")}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+      <div className="text-xs text-slate-500">Tap a star to submit. Tags are optional.</div>
     </Card>
   );
 }

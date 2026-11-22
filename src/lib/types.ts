@@ -1,8 +1,17 @@
 export type Station = "Tandoor" | "Curry" | "Cold" | "Drinks";
 export const STATIONS: Station[] = ["Tandoor", "Curry", "Cold", "Drinks"];
 
-export type Category = "Starters" | "Mains" | "Breads" | "Rice" | "Desserts" | "Drinks";
-export const CATEGORIES: Category[] = ["Starters", "Mains", "Breads", "Rice", "Desserts", "Drinks"];
+/** Menu categories are free-form per restaurant; this is only the preferred display order for common ones. */
+export type Category = string;
+export const CATEGORIES: string[] = ["Starters", "Soups", "Salads", "Mains", "Breads", "Rice", "Noodles", "Pizza", "Pasta", "Burgers", "Sandwiches", "Desserts", "Drinks"];
+
+/** Sort categories: known ones in CATEGORIES order, then the rest by first appearance. */
+export function orderCategories(items: { category: string; sortOrder: number }[]): string[] {
+  const first = new Map<string, number>();
+  for (const i of [...items].sort((a, b) => a.sortOrder - b.sortOrder)) if (!first.has(i.category)) first.set(i.category, first.size);
+  const rank = (c: string) => (CATEGORIES.includes(c) ? CATEGORIES.indexOf(c) : 100 + (first.get(c) ?? 0));
+  return [...first.keys()].sort((a, b) => rank(a) - rank(b));
+}
 
 export const ALLERGENS = ["Dairy", "Nuts", "Gluten", "Egg", "Soy", "Sesame", "Mustard", "Shellfish"] as const;
 export type Allergen = (typeof ALLERGENS)[number];
@@ -43,7 +52,11 @@ export interface MenuItem {
 }
 
 export type StaffRole = "admin" | "waiter";
-export type ViewRole = StaffRole | "customer";
+export type SessionRole = StaffRole | "super";
+export type ViewRole = SessionRole | "customer";
+
+export type ThemeId = "saffron" | "leaf" | "chilli" | "olive" | "coffee" | "indigo" | "rose";
+export type Lang = "en" | "hi";
 
 export interface RestaurantTable {
   id: string; // "T1"
@@ -154,8 +167,20 @@ export interface QuizScore {
 
 export interface Settings {
   id: "main";
+  /** URL slug, also the restaurant id: /r/<slug> */
+  slug: string;
   restaurantName: string;
   tagline: string;
+  cuisine?: string;
+  theme?: ThemeId;
+  heroImage?: string;
+  /** Restaurant WhatsApp number (digits incl. country code) for daily summaries. */
+  whatsappNumber?: string;
+  /** Google Maps "write a review" link; happy guests are nudged here. */
+  googleReviewUrl?: string;
+  defaultLanguage?: Lang;
+  active?: boolean;
+  createdAt?: number;
   wifiSsid: string;
   wifiPassword: string;
   taxRate: number; // e.g. 0.05 GST

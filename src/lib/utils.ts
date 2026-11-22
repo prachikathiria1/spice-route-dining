@@ -85,3 +85,17 @@ export function splitAmount(total: number, n: number): number[] {
   const base = Math.floor(total / ways);
   return Array.from({ length: ways }, (_, i) => (i === ways - 1 ? total - base * (ways - 1) : base));
 }
+
+/** Normalises an Indian mobile number to 91XXXXXXXXXX (returns null if it doesn't look valid). */
+export function normalizePhone(raw: string): string | null {
+  const d = raw.replace(/\D/g, "");
+  if (d.length === 10 && /^[6-9]/.test(d)) return `91${d}`;
+  if (d.length === 12 && d.startsWith("91")) return d;
+  if (d.length >= 11 && d.length <= 15) return d;
+  return null;
+}
+
+/** Free WhatsApp click-to-chat link (no API, no fees). Without a phone, the user picks a contact. */
+export function waLink(text: string, phone?: string | null): string {
+  return `https://wa.me/${phone ?? ""}?text=${encodeURIComponent(text)}`;
+}

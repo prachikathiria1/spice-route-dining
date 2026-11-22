@@ -1,43 +1,34 @@
 import { NextResponse } from "next/server";
-import { rolePin, safeEqual, SESSION_COOKIE, SESSION_HOURS, signSession } from "@/lib/auth";
-import type { StaffRole } from "@/lib/types";
-
-// Simple in-memory throttle per instance (best effort on serverless).
-const attempts = new Map<string, { n: number; until: number }>();
+import { SLUG_RE } from "@/lib/data/adapter";
+import { sessionResponse } from "@/lib/server/cookie";
+import { verifyPin } from "@/lib/server/pins";
+import { clearFailures, clientIp, recordFailure, throttled } from "@/lib/server/throttle";
 
 export async function POST(req: Request) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  const a = attempts.get(ip);
-  if (a && a.until > Date.now()) return NextResponse.json({ ok: false, error: "Too many attempts. Try again in a minute." }, { status: 429 });
-
-  let body: { role?: string; pin?: string };
+  let body: { rid?: string; role?: string; pin?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });
   }
-  const role = body.role as StaffRole;
+  const { rid = "", role, pin = "" } = body;
+  if (!SLUG_RE.test(rid)) return NextResponse.json({ ok: false, error: "Unknown restaurant" }, { status: 400 });
   if (role !== "admin" && role !== "waiter") return NextResponse.json({ ok: false, error: "Unknown role" }, { status: 400 });
 
-  const expected = rolePin(role);
-  if (!expected) return NextResponse.json({ ok: false, error: "Staff PINs aren't configured on this server (set ADMIN_PIN, WAITER_PIN, AUTH_SECRET)." }, { status: 500 });
+  const key = `${clientIp(req)}|${rid}`;
+  if (throttled(key)) return NextResponse.json({ ok: false, error: "Too many tries. Wait one minute." }, { status: 429 });
 
-  if (!safeEqual(String(body.pin ?? ""), expected)) {
-    const n = (a?.n ?? 0) + 1;
-    attempts.set(ip, { n, until: n >= 5 ? Date.now() + 60_000 : 0 });
-    return NextResponse.json({ ok: false, error: "Incorrect PIN" }, { status: 401 });
+  let ok = false;
+  try {
+    ok = await verifyPin(rid, role, String(pin));
+  } catch (e) {
+    console.error("[login]", e);
+    return NextResponse.json({ ok: false, error: "Login is unavailable right now" }, { status: 500 });
   }
-  attempts.delete(ip);
-
-  const token = await signSession(role);
-  if (!token) return NextResponse.json({ ok: false, error: "AUTH_SECRET is not configured" }, { status: 500 });
-  const res = NextResponse.json({ ok: true, role });
-  res.cookies.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: SESSION_HOURS * 3600,
-  });
-  return res;
+  if (!ok) {
+    recordFailure(key);
+    return NextResponse.json({ ok: false, error: "Wrong PIN" }, { status: 401 });
+  }
+  clearFailures(key);
+  return sessionResponse({ role, rid }, { role });
 }

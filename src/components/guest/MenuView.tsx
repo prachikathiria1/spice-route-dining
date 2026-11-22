@@ -4,7 +4,7 @@ import { Plus, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SpiceMeter, VegMark } from "@/components/ui";
 import { HERO_IMAGE } from "@/lib/images";
-import { CATEGORIES, type Category, type MenuItem } from "@/lib/types";
+import { orderCategories, type Category, type MenuItem } from "@/lib/types";
 import { cn, formatINR } from "@/lib/utils";
 import { DishImage, hasDishImage } from "./DishImage";
 
@@ -24,8 +24,8 @@ export function MenuView({ menu, tableLabel, restaurantName, onOpen }: { menu: M
   }, [sorted, query, category, vegOnly]);
 
   const picks = sorted.filter((m) => m.popular && m.available && hasDishImage(m)).slice(0, 8);
-  const groups = CATEGORIES.map((c) => ({ c, items: filtered.filter((m) => m.category === c) })).filter((g) => g.items.length);
-  const usedCategories = CATEGORIES.filter((c) => menu.some((m) => m.category === c));
+  const usedCategories = useMemo(() => orderCategories(menu), [menu]);
+  const groups = usedCategories.map((c) => ({ c, items: filtered.filter((m) => m.category === c) })).filter((g) => g.items.length);
   const browsing = !query && category === "All" && !vegOnly;
 
   return (

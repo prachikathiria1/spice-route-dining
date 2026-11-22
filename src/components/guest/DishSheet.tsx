@@ -62,7 +62,7 @@ export function DishSheet({ item, onClose, onAdd }: { item: MenuItem | null; onC
     >
       {photo && (
         <div className="aspect-[16/10] w-full bg-slate-100">
-          <DishImage item={item} eager className="size-full" />
+          <DishImage item={item} eager showTag className="size-full" />
         </div>
       )}
       <div className={cn("space-y-6 p-5", !photo && "pt-12")}>

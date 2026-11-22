@@ -1,3 +1,4 @@
+import type { RestaurantTable, Settings, ThemeId } from "./types";
 import type { DbState, MenuItem, Order, OrderLine, Payment, QuizScore, Review, WaiterCall } from "./types";
 import { uid } from "./utils";
 
@@ -70,6 +71,61 @@ function line(menuItemId: string, qty: number, sizeId?: string, done = false): O
     qty,
     addOns: [],
     done,
+  };
+}
+
+export const DEMO_SLUG = "spice-route";
+
+export interface NewRestaurantInput {
+  slug: string;
+  restaurantName: string;
+  tagline?: string;
+  cuisine?: string;
+  theme?: ThemeId;
+  tableCount: number;
+  wifiSsid?: string;
+  wifiPassword?: string;
+  whatsappNumber?: string;
+  googleReviewUrl?: string;
+  taxRate?: number;
+  defaultLanguage?: Settings["defaultLanguage"];
+  menu?: MenuItem[];
+}
+
+export function makeTables(count: number, existing: RestaurantTable[] = []): RestaurantTable[] {
+  return Array.from({ length: count }, (_, i) => existing.find((t) => t.id === `T${i + 1}`) ?? { id: `T${i + 1}`, label: `Table ${i + 1}`, seats: 4, sessionId: null, sessionStartedAt: null, billRequestedAt: null });
+}
+
+/** An empty restaurant: settings, tables and (optionally) an imported menu. */
+export function buildRestaurant(input: NewRestaurantInput, now = Date.now()): DbState {
+  return {
+    settings: [
+      {
+        id: "main",
+        slug: input.slug,
+        restaurantName: input.restaurantName,
+        tagline: input.tagline ?? "",
+        cuisine: input.cuisine,
+        theme: input.theme ?? "saffron",
+        wifiSsid: input.wifiSsid ?? "",
+        wifiPassword: input.wifiPassword ?? "",
+        whatsappNumber: input.whatsappNumber,
+        googleReviewUrl: input.googleReviewUrl,
+        taxRate: input.taxRate ?? 0.05,
+        pointsPerRupees: 10,
+        nextOrderNumber: 101,
+        defaultLanguage: input.defaultLanguage ?? "en",
+        active: true,
+        createdAt: now,
+      },
+    ],
+    menu_items: input.menu ?? [],
+    restaurant_tables: makeTables(Math.max(1, Math.min(100, input.tableCount))),
+    orders: [],
+    waiter_calls: [],
+    payments: [],
+    reviews: [],
+    quiz_scores: [],
   };
 }
 
@@ -158,7 +214,13 @@ export function buildSeed(now = Date.now()): DbState {
     settings: [
       {
         id: "main",
+        slug: DEMO_SLUG,
         restaurantName: "Spice Route",
+        cuisine: "North Indian",
+        theme: "saffron",
+        defaultLanguage: "en",
+        active: true,
+        createdAt: now,
         tagline: "North Indian kitchen & tandoor",
         wifiSsid: "SpiceRoute_Guest",
         wifiPassword: "naan-stop-2026",

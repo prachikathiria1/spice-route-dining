@@ -58,8 +58,8 @@ export function GuestApp({ tableId }: { tableId: string }) {
         <UtensilsCrossed className="size-12 text-slate-300" />
         <h1 className="text-2xl font-extrabold">Table not found</h1>
         <p className="text-slate-600">This QR code doesn&apos;t match a table here. Please ask a staff member.</p>
-        <Link href="/" className="font-semibold text-brand-700 hover:underline">
-          Go to the home page
+        <Link href={`/r/${state.settings[0].slug}`} className="font-semibold text-brand-700 hover:underline">
+          Pick your table
         </Link>
       </div>
     );

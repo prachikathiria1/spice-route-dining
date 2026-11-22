@@ -4,18 +4,28 @@ import { canAccess, SESSION_COOKIE, verifySession } from "@/lib/auth";
 /** Optimistic route gate. Server layouts re-check the session too. */
 export async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
-  const need = pathname.startsWith("/admin") ? "admin" : "waiter";
-  const role = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
-  if (canAccess(role, need)) return NextResponse.next();
-
+  const session = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
   const url = req.nextUrl.clone();
-  url.pathname = "/login";
   url.search = "";
+
+  if (pathname.startsWith("/super")) {
+    if (pathname === "/super/login" || session?.role === "super") return NextResponse.next();
+    url.pathname = "/super/login";
+    return NextResponse.redirect(url);
+  }
+
+  // /r/<slug>/(staff|kitchen|floor|admin)...
+  const m = /^\/r\/([^/]+)\/(staff|kitchen|floor|admin)(\/|$)/.exec(pathname);
+  if (!m) return NextResponse.next();
+  const [, rid, section] = m;
+  const need = section === "admin" ? "admin" : "waiter";
+  if (canAccess(session, need, rid)) return NextResponse.next();
+  url.pathname = `/r/${rid}/login`;
   url.searchParams.set("next", pathname + search);
   if (need === "admin") url.searchParams.set("need", "admin");
   return NextResponse.redirect(url);
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/staff/:path*", "/kitchen/:path*", "/floor/:path*"],
+  matcher: ["/super/:path*", "/r/:slug/staff/:path*", "/r/:slug/kitchen/:path*", "/r/:slug/floor/:path*", "/r/:slug/admin/:path*"],
 };
