@@ -66,7 +66,7 @@ export default function RestaurantHome() {
         <div className="mx-auto max-w-3xl px-5 pt-4">
           <div className="flex items-center justify-between">
             <span className="flex size-10 items-center justify-center rounded-2xl bg-white text-sm font-extrabold text-brand-700 shadow-lg">{(s?.restaurantName ?? "R").slice(0, 2).toUpperCase()}</span>
-            <RoleBadge view={role ?? "customer"} className="bg-white text-brand-700" />
+            <RoleBadge view={role ?? "customer"} light />
           </div>
           <div className="mt-10 animate-rise">
             <p className="flex items-center gap-1.5 text-sm font-semibold text-white/80">
@@ -113,7 +113,7 @@ export default function RestaurantHome() {
                   aria-label={`Table ${n}, ${t.seats} seats${busy ? ", occupied" : ""}`}
                 >
                   <TableArt number={n} seats={t.seats} busy={busy} className="w-full max-w-[7.5rem]" />
-                  <span className={cn("mt-1 text-xs font-bold", busy ? "text-slate-400" : "text-slate-600")}>{busy ? "Join your group" : `${t.seats} seats`}</span>
+                  <span className={cn("mt-1 rounded-full px-2 py-0.5 text-[11px] font-bold", busy ? "bg-brand-50 text-brand-700" : "text-slate-600")}>{busy ? "Join your group" : `${t.seats} seats`}</span>
                 </Link>
               );
             })}

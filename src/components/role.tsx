@@ -23,11 +23,11 @@ const BADGE: Record<ViewRole, { label: string; icon: typeof ShieldCheck; cls: st
 };
 
 /** Pill shown in the top-right corner of every screen. */
-export function RoleBadge({ view, className }: { view: ViewRole; className?: string }) {
+export function RoleBadge({ view, className, light }: { view: ViewRole; className?: string; light?: boolean }) {
   const b = BADGE[view];
   const Icon = b.icon;
   return (
-    <span className={cn("inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-bold tracking-wide shadow-sm", b.cls, className)} data-testid="role-badge">
+    <span className={cn("inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-bold tracking-wide shadow-sm", light ? "bg-white text-zinc-900" : b.cls, className)} data-testid="role-badge">
       <Icon className="size-3.5" aria-hidden /> {b.label}
     </span>
   );

@@ -14,18 +14,18 @@ export function TableArt({ number, seats, busy, className }: { number: string; s
     <svg viewBox="0 0 120 120" className={cn("overflow-visible", className)} aria-hidden>
       {chairs.map((c, i) => (
         <g key={i} transform={`translate(${c.x} ${c.y}) rotate(${c.deg})`} className="chair transition-transform duration-300">
-          <rect x={-11} y={-7} width={22} height={14} rx={6} fill={busy ? "#cbd5e1" : "var(--color-brand-300)"} />
-          <rect x={-8} y={-10} width={16} height={5} rx={2.5} fill={busy ? "#94a3b8" : "var(--color-brand-500)"} />
+          <rect x={-11} y={-7} width={22} height={14} rx={6} fill={busy ? "var(--color-brand-200)" : "var(--color-brand-300)"} />
+          <rect x={-8} y={-10} width={16} height={5} rx={2.5} fill={busy ? "var(--color-brand-300)" : "var(--color-brand-500)"} />
         </g>
       ))}
       {round ? (
-        <circle cx={60} cy={60} r={31} fill={busy ? "#f1f5f9" : "white"} stroke={busy ? "#cbd5e1" : "var(--color-brand-500)"} strokeWidth={3} />
+        <circle cx={60} cy={60} r={31} fill={busy ? "var(--color-brand-50)" : "white"} stroke={busy ? "var(--color-brand-300)" : "var(--color-brand-500)"} strokeWidth={3} />
       ) : (
-        <rect x={27} y={27} width={66} height={66} rx={18} fill={busy ? "#f1f5f9" : "white"} stroke={busy ? "#cbd5e1" : "var(--color-brand-500)"} strokeWidth={3} />
+        <rect x={27} y={27} width={66} height={66} rx={18} fill={busy ? "var(--color-brand-50)" : "white"} stroke={busy ? "var(--color-brand-300)" : "var(--color-brand-500)"} strokeWidth={3} />
       )}
       {/* little plate + cutlery */}
-      <circle cx={60} cy={60} r={19} fill="none" stroke={busy ? "#e2e8f0" : "var(--color-brand-100)"} strokeWidth={6} />
-      <text x={60} y={68} textAnchor="middle" fontSize={24} fontWeight={800} fill={busy ? "#94a3b8" : "#18181b"} fontFamily="inherit">
+      <circle cx={60} cy={60} r={19} fill="none" stroke="var(--color-brand-100)" strokeWidth={6} />
+      <text x={60} y={68} textAnchor="middle" fontSize={24} fontWeight={800} fill={busy ? "#52525b" : "#18181b"} fontFamily="inherit">
         {number}
       </text>
     </svg>

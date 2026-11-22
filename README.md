@@ -19,6 +19,29 @@ With no env vars set, the app runs in **local demo mode**:
 
 Admins can reset the data in **Settings**.
 
+## Multi-restaurant platform
+
+Each restaurant lives at `/r/<slug>`: its customer page, `/t/<n>` tables, staff app and manager pages. Every database row id is namespaced as `<slug>::<id>`, so many restaurants share the same tables. Old single-restaurant URLs such as `/t/5` and `/staff` redirect to the demo restaurant (`spice-route`).
+
+**Super admin (`/super`)** is for the platform owner only. It's protected by the server variable `SUPER_ADMIN_PASSWORD` (dev default: `super-admin`). From there you can:
+- Add a restaurant: details → menu import → theme and staff PINs → a handover message with links and PINs.
+- **Import menus from PDFs or photos.**
+  - With `ANTHROPIC_API_KEY` set, Claude vision reads each page (sections, Half/Full prices, veg marks).
+  - Without it, the app reads a digital PDF's embedded text exactly, or runs free in-browser OCR (tesseract.js) on photos.
+  - Every import ends in an editable review screen.
+- Change the theme, pause or resume a restaurant, reset PINs, and re-import menus. Dishes with matching names keep their photos and settings.
+
+Staff PINs are salted scrypt hashes stored in a private Supabase Storage bucket (`secure`). The server reads that bucket with `SUPABASE_SECRET_KEY`, which must never go in a `NEXT_PUBLIC_` variable. Dish and hero photos go to the public `media` bucket.
+
+**Staff app:**
+- Phone-first, with bottom tabs, a big PIN keypad, and Hindi or English.
+- Big-text mode, plus sound and vibration alerts for new orders and waiter calls.
+- Installable from `/r/<slug>/manifest.webmanifest`. The service worker caches static files only.
+
+**Growth features:**
+- WhatsApp bill and receipt sharing, and a daily summary to the owner (free `wa.me` links).
+- After a 4–5★ rating, guests get a Google review prompt. After 1–3★, they get a private feedback box shown on the manager dashboard.
+
 ## Roles
 
 There are three roles. The current role is always shown as a badge in the top-right corner of the screen: **Customer view**, **Waiter view** or **Admin view**.
